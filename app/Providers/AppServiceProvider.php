@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -24,6 +26,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        Http::macro('spotify', function (string $token) {
+            return Http::withHeaders([
+                'Authentication' => 'Bearer '.$token,
+            ])->baseUrl(Config::get('services.spotify.api_url'));
+        });
     }
 }

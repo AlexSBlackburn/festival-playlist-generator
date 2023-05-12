@@ -8,5 +8,5 @@ interface StreamingService
 {
     public function createPlaylist(int $year): Playlist;
 
-    public function updatePlaylist(Playlist $playlist, array $band): void;
+    public function updatePlaylist(Playlist $playlist, string $band): void;
 }

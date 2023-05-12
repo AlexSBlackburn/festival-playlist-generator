@@ -28,9 +28,6 @@ class UpdatePlaylist extends Command
      */
     public function handle(StreamingService $streamingService, FestivalService $festivalService): void
     {
-        $this->info($this->argument('year'));
-        exit(self::SUCCESS);
-
         $playlist = Playlist::where('year', $this->argument('year'))->first();
 
         if (!$playlist) {
@@ -43,7 +40,7 @@ class UpdatePlaylist extends Command
 
         $this->info('Playlist ID: ' . $playlist->spotify_id);
 
-        $this->withProgressBar($festivalService->getBands(), function (array $band) use ($streamingService, $playlist) {
+        $this->withProgressBar($festivalService->getBands(), function (string $band) use ($streamingService, $playlist) {
             $streamingService->updatePlaylist($playlist, $band);
         });
     }

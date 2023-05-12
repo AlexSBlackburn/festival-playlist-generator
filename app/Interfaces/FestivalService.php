@@ -2,7 +2,9 @@
 
 namespace App\Interfaces;
 
+use Illuminate\Support\Collection;
+
 interface FestivalService
 {
-    public function getBands(): array;
+    public function getBands(): Collection;
 }

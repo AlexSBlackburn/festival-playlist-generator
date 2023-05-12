@@ -31,4 +31,7 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    'desertfest' => [
+        'url' => 'https://www.desertfest.co.uk/wp-json/wp/v2/band?_fields=title&per_page=100',
+    ]
 ];

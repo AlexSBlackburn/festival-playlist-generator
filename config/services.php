@@ -33,5 +33,13 @@ return [
 
     'desertfest' => [
         'url' => 'https://www.desertfest.co.uk/wp-json/wp/v2/band?_fields=title&per_page=100',
+    ],
+
+    'spotify' => [
+        'api_url' => 'https://api.spotify.com/v1',
+        'client_id' => env('SPOTIFY_CLIENT_ID'),
+        'client_secret' => env('SPOTIFY_CLIENT_SECRET'),
+        'token_url' => 'https://accounts.spotify.com/api/token',
+        'user_id' => env('SPOTIFY_USER_ID'),
     ]
 ];

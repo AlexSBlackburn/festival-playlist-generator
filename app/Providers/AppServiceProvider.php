@@ -28,7 +28,7 @@ class AppServiceProvider extends ServiceProvider
     {
         Http::macro('spotify', function (string $token) {
             return Http::withHeaders([
-                'Authentication' => 'Bearer '.$token,
+                'Authorization' => 'Bearer '.$token,
             ])->baseUrl(Config::get('services.spotify.api_url'));
         });
     }

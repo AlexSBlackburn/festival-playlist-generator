@@ -73,9 +73,7 @@ class SpotifyService implements StreamingService
             return Cache::get('spotify_token');
         }
 
-        $response = Http::withHeaders([
-            'Content-Type' => 'application/x-www-form-urlencoded'
-        ])->post(Config::get('services.spotify.token_url'), [
+        $response = Http::asForm()->post(Config::get('services.spotify.token_url'), [
             'grant_type' => 'client_credentials',
             'client_id' => Config::get('services.spotify.client_id'),
             'client_secret' => Config::get('services.spotify.client_secret'),

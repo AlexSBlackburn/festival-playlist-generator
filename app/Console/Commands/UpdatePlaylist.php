@@ -21,7 +21,7 @@ class UpdatePlaylist extends Command
      *
      * @var string
      */
-    protected $description = 'Command description';
+    protected $description = 'Create a populate a new festival playlist';
 
     /**
      * Execute the console command.

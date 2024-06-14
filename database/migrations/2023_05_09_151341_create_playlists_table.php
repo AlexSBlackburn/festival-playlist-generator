@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('playlists', function (Blueprint $table) {
             $table->id();
-            $table->string('spotify_id');
+            $table->string('service_id');
             $table->unsignedInteger('year');
             $table->timestamps();
         });

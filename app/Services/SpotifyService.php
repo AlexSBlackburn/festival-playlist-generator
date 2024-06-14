@@ -34,7 +34,7 @@ class SpotifyService implements StreamingService
 
     public function updatePlaylist(Playlist $playlist, string $band): void
     {
-        if (!$this->currentArtists) {
+        if ($this->currentArtists->isEmpty()) {
             $this->setCurrentArtists($playlist);
         }
 
@@ -42,28 +42,42 @@ class SpotifyService implements StreamingService
             $album = $this->getMostRecentOrPopularAlbum($band);
 
             Http::spotify($this->getToken())->post('/playlists/'.$playlist->service_id.'/tracks', [
-                'uris' => $album,
+                'uris' => $this->getAlbumTracks($album['id'])->pluck('uri'),
             ])->throw();
         }
     }
 
-    private function getMostRecentOrPopularAlbum(string $band): string
+    private function getMostRecentOrPopularAlbum(string $band): array
     {
-        $albums = collect(Http::spotify($this->getToken())->get('/search', [
-            'q' => 'artist:'.$band,
-            'type' => 'album',
-        ])->throw()->json()['albums']['items'])
+        $response = Http::spotify($this->getToken())
+            ->get('/search?q=artist:"'.$band.'"&type=album') // this doesn't work as spaces in the band name get encoded
+            ->throw()
+            ->json();
+
+        $albums = collect($response['albums']['items'])
             ->filter(fn($album) => $album['album_type'] === 'album')
             ->sortByDesc('release_date');
+
+        if ($albums->count() === 0) {
+            throw new \Exception('No albums found for '.$band, 404);
+        }
 
         $album = $albums->first();
 
         // If the album is older than 3 years, get the most popular album instead
-        if (Str::substr($album['release_date'], 0, 4) < now()->minusYears(3)->format('Y')) {
+        if (Str::substr($album['release_date'], 0, 4) < now()->subYears(3)->format('Y')) {
             $album = $albums->sortByDesc('popularity')->first();
         }
 
-        return $album['uri'];
+        return $album;
+    }
+
+    private function getAlbumTracks(string $albumId): Collection
+    {
+        return Http::spotify($this->getToken())
+            ->get('/albums/'.$albumId.'/tracks')
+            ->throw()
+            ->collect(['items']);
     }
 
     /**
@@ -81,14 +95,13 @@ class SpotifyService implements StreamingService
 
         $response = Http::asForm()
             ->withHeaders([
-                'Authorization' => 'Basic '.str(config('services.spotify.client_id').':'.config('services.spotify.client_secret'))->toBase64(),
+                'Authorization' => 'Basic '.base64_encode(config('services.spotify.client_id').':'.config('services.spotify.client_secret')),
             ])
             ->post(config('services.spotify.token_url'), [
             'grant_type' => 'refresh_token',
             'refresh_token' => Cache::get('spotify_refresh_token'),
         ])->throw()->json();
 
-        Cache::put('spotify_refresh_token', $response['refresh_token']);
         Cache::put('spotify_access_token', $response['access_token'], $response['expires_in']);
 
         return $response['access_token'];
@@ -99,6 +112,6 @@ class SpotifyService implements StreamingService
         $this->currentArtists = collect(Http::spotify($this->getToken())
             ->get('/playlists/'.$playlist->service_id.'/tracks', [
                 'fields' => 'items(track(artists(name)))',
-            ])->throw()->json())->pluck('track.artists.*.name')->flatten()->unique();
+            ])->throw()->json())->pluck('*.track.artists.*.name')->flatten()->unique();
     }
 }

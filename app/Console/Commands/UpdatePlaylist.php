@@ -42,7 +42,7 @@ class UpdatePlaylist extends Command
             $this->info('Playlist ID: ' . $playlist->service_id);
 
             $this->withProgressBar($festivalService->getBands(), function (string $band) use ($streamingService, $playlist): void {
-                $streamingService->updatePlaylist($playlist, $band);
+                $streamingService->updatePlaylist(playlist: $playlist, band: $band);
             });
         } catch (\Exception $e) {
             $this->error($e->getMessage());

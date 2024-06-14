@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Exceptions\AlbumsNotFoundException;
 use App\Interfaces\StreamingService;
 use App\Models\Playlist;
 use Illuminate\Support\Collection;
@@ -50,16 +51,32 @@ class SpotifyService implements StreamingService
     private function getMostRecentOrPopularAlbum(string $band): array
     {
         $response = Http::spotify($this->getToken())
-            ->get('/search?q=artist:"'.$band.'"&type=album') // this doesn't work as spaces in the band name get encoded
-            ->throw()
-            ->json();
+            ->get('/search', [
+                'q' => 'artist:"'.$band.'"',
+                'type' => 'album'
+            ])
+            ->throw();
 
-        $albums = collect($response['albums']['items'])
-            ->filter(fn($album) => $album['album_type'] === 'album')
-            ->sortByDesc('release_date');
+        $albums = collect($response['albums']['items'])->sortByDesc('release_date');
+
+        $fullLengths = $albums->filter(fn(array $album) => $album['album_type'] === 'album');
+        $epsAndSingles = $albums->filter(fn(array $album) => $album['album_type'] === 'single');
+
+        // Get albums, then EPs, then singles
+        if ($fullLengths->isNotEmpty()) {
+            $albums = $fullLengths;
+        } else {
+            $eps = $epsAndSingles->filter(fn(array $item) => $item['total_tracks'] > 1);
+
+            if ($eps->isNotEmpty()) {
+                $albums = $eps;
+            } else {
+                $albums = $epsAndSingles;
+            }
+        }
 
         if ($albums->count() === 0) {
-            throw new \Exception('No albums found for '.$band, 404);
+            throw new AlbumsNotFoundException('No albums found for '.$band);
         }
 
         $album = $albums->first();

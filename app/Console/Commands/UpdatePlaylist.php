@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Exceptions\AlbumsNotFoundException;
 use App\Interfaces\FestivalService;
 use App\Interfaces\StreamingService;
 use App\Models\Playlist;
@@ -33,17 +34,36 @@ class UpdatePlaylist extends Command
 
             if (!$playlist) {
                 $this->info('No playlist found for the year '.$this->argument('year').'. Creating new playlist...');
+                $this->newLine();
 
                 $playlist = $streamingService->createPlaylist($this->argument('year'));
 
                 $this->info('Playlist created for the year '.$playlist->year);
+                $this->newLine();
             }
 
             $this->info('Playlist ID: ' . $playlist->service_id);
+            $this->newLine();
+            $this->info('Adding bands to playlist...');
+            $this->newLine();
 
-            $this->withProgressBar($festivalService->getBands(), function (string $band) use ($streamingService, $playlist): void {
-                $streamingService->updatePlaylist(playlist: $playlist, band: $band);
+            $failedBands = collect();
+
+            $this->withProgressBar($festivalService->getBands(), function (string $band) use ($streamingService, $playlist, $failedBands): void {
+                try {
+                    $streamingService->updatePlaylist(playlist: $playlist, band: $band);
+                } catch (AlbumsNotFoundException) {
+                    $failedBands->add($band);
+                }
             });
+            $this->newLine();
+            
+            if ($failedBands->isNotEmpty()) {
+                $this->newLine();
+                $failedBands->each(function (string $band): void {
+                    $this->info('No albums found for '.$band);
+                });
+            }
         } catch (\Exception $e) {
             $this->error($e->getMessage());
         }

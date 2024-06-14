@@ -1,6 +1,8 @@
 <?php
 
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Route;
+use Laravel\Socialite\Facades\Socialite;
 
 /*
 |--------------------------------------------------------------------------
@@ -15,4 +17,17 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('welcome');
+});
+
+Route::get('/{streamingService}/authorize', function (string $streamingService) {
+    return Socialite::driver($streamingService)->scopes(['playlist-modify-public'])->redirect();
+});
+
+Route::get('/{streamingService}/callback', function (string $streamingService) {
+    $user = Socialite::driver($streamingService)->user();
+
+    Cache::put($streamingService. '_refresh_token', $user->refreshToken);
+    Cache::put($streamingService. '_access_token', $user->token, $user->expiresIn);
+
+    echo 'Authorized user: '.$user->getName().'. Please re-run app:update-playlist command.';
 });

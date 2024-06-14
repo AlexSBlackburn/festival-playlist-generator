@@ -21,27 +21,31 @@ class UpdatePlaylist extends Command
      *
      * @var string
      */
-    protected $description = 'Create a populate a new festival playlist';
+    protected $description = 'Update a festival playlist, optionally create a playlist if it doesn\'t exist';
 
     /**
      * Execute the console command.
      */
     public function handle(StreamingService $streamingService, FestivalService $festivalService): void
     {
-        $playlist = Playlist::where('year', $this->argument('year'))->first();
+        try {
+            $playlist = Playlist::where('year', $this->argument('year'))->first();
 
-        if (!$playlist) {
-            $this->info('No playlist found for the year '.$this->argument('year').'. Creating new playlist...');
+            if (!$playlist) {
+                $this->info('No playlist found for the year '.$this->argument('year').'. Creating new playlist...');
 
-            $playlist = $streamingService->createPlaylist($this->argument('year'));
+                $playlist = $streamingService->createPlaylist($this->argument('year'));
 
-            $this->info('Playlist created for the year '.$playlist->year);
+                $this->info('Playlist created for the year '.$playlist->year);
+            }
+
+            $this->info('Playlist ID: ' . $playlist->service_id);
+
+            $this->withProgressBar($festivalService->getBands(), function (string $band) use ($streamingService, $playlist): void {
+                $streamingService->updatePlaylist($playlist, $band);
+            });
+        } catch (\Exception $e) {
+            $this->error($e->getMessage());
         }
-
-        $this->info('Playlist ID: ' . $playlist->spotify_id);
-
-        $this->withProgressBar($festivalService->getBands(), function (string $band) use ($streamingService, $playlist) {
-            $streamingService->updatePlaylist($playlist, $band);
-        });
     }
 }

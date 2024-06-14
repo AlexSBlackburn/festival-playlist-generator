@@ -39,6 +39,7 @@ return [
         'api_url' => 'https://api.spotify.com/v1',
         'client_id' => env('SPOTIFY_CLIENT_ID'),
         'client_secret' => env('SPOTIFY_CLIENT_SECRET'),
+        'redirect' => env('APP_URL') . env('SPOTIFY_REDIRECT_URI'),
         'token_url' => 'https://accounts.spotify.com/api/token',
         'user_id' => env('SPOTIFY_USER_ID'),
     ]

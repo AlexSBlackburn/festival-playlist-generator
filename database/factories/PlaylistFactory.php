@@ -17,7 +17,7 @@ class PlaylistFactory extends Factory
     public function definition(): array
     {
         return [
-            'spotify_id' => fake()->unique()->regexify('[a-z0-9]{22}'),
+            'service_id' => fake()->unique()->regexify('[a-z0-9]{22}'),
             'year' => fake()->year(),
         ];
     }

@@ -21,7 +21,7 @@ class SpotifyService implements StreamingService
 
     public function createPlaylist(int $year): Playlist
     {
-        $spotifyPlaylist = Http::spotify($this->getToken())
+        $spotifyPlaylist = Http::spotify()
             ->post('/users/'.config('services.spotify.user_id').'/playlists', [
                 'name' => 'Desertfest '.$year,
             ])->throw()->json();
@@ -43,7 +43,7 @@ class SpotifyService implements StreamingService
         if ($this->currentArtists->doesntContain(str($band)->title())) {
             $album = $this->getMostRecentOrPopularAlbum($band);
 
-            Http::spotify($this->getToken())->post('/playlists/'.$playlist->service_id.'/tracks', [
+            Http::spotify()->post('/playlists/'.$playlist->service_id.'/tracks', [
                 'uris' => $this->getAlbumTracks($album['id'])->pluck('uri'),
             ])->throw();
         }
@@ -81,7 +81,7 @@ class SpotifyService implements StreamingService
 
     private function getAlbumsByArtist(string $band, int $offset = 0): Collection
     {
-        $response = Http::spotify($this->getToken())
+        $response = Http::spotify()
             ->get('/search', [
                 'q' => 'artist:"'.$band.'"',
                 'type' => 'album',
@@ -111,42 +111,15 @@ class SpotifyService implements StreamingService
 
     private function getAlbumTracks(string $albumId): Collection
     {
-        return Http::spotify($this->getToken())
+        return Http::spotify()
             ->get('/albums/'.$albumId.'/tracks')
             ->throw()
             ->collect(['items']);
     }
 
-    /**
-     * Get the cached Spotify access token or refresh it
-     */
-    private function getToken(): string
-    {
-        if (Cache::has('spotify_access_token')) {
-            return Cache::get('spotify_access_token');
-        }
-
-        if (! Cache::has('spotify_refresh_token')) {
-            throw new \Exception('No refresh token found. Please visit http://localhost/spotify/authorize to request one.', 401);
-        }
-
-        $response = Http::asForm()
-            ->withHeaders([
-                'Authorization' => 'Basic '.base64_encode(config('services.spotify.client_id').':'.config('services.spotify.client_secret')),
-            ])
-            ->post(config('services.spotify.token_url'), [
-            'grant_type' => 'refresh_token',
-            'refresh_token' => Cache::get('spotify_refresh_token'),
-        ])->throw()->json();
-
-        Cache::put('spotify_access_token', $response['access_token'], $response['expires_in']);
-
-        return $response['access_token'];
-    }
-
     private function setCurrentArtists(Playlist $playlist, int $offset = 0)
     {
-        $response = Http::spotify($this->getToken())
+        $response = Http::spotify()
             ->get('/playlists/'.$playlist->service_id.'/tracks', [
                 'fields' => 'items(track(artists(name))),total',
                 'limit' => 50,
@@ -161,5 +134,32 @@ class SpotifyService implements StreamingService
         if ($response['total'] > $offset) {
             $this->setCurrentArtists($playlist, $offset);
         }
+    }
+
+    /**
+     * Get the cached Spotify access token or refresh it
+     */
+    public static function getToken(): string
+    {
+        if (Cache::has('spotify_access_token')) {
+            return Cache::get('spotify_access_token');
+        }
+
+        if (! Cache::has('spotify_refresh_token')) {
+            throw new \Exception('No refresh token found. Please visit http://localhost/spotify/authorize to request one.', 401);
+        }
+
+        $response = Http::asForm()
+            ->withHeaders([
+                'Authorization' => 'Basic '.base64_encode(config('services.spotify.client_id').':'.config('services.spotify.client_secret')),
+            ])
+            ->post(config('services.spotify.token_url'), [
+                'grant_type' => 'refresh_token',
+                'refresh_token' => Cache::get('spotify_refresh_token'),
+            ])->throw()->json();
+
+        Cache::put('spotify_access_token', $response['access_token'], $response['expires_in']);
+
+        return $response['access_token'];
     }
 }

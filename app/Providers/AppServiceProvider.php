@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Services\SpotifyService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Http;
@@ -27,11 +28,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        Http::macro('spotify', function (string $token) {
-            return Http::withHeaders([
-                'Authorization' => 'Bearer '.$token,
-            ])->baseUrl(Config::get('services.spotify.api_url'));
-        });
+        Http::macro('spotify', fn () => Http::withHeaders([
+            'Authorization' => 'Bearer '.SpotifyService::getToken(),
+        ])->baseUrl(Config::get('services.spotify.api_url')));
 
         Collection::macro('filterByArtist', function (string $band): Collection {
             $band = str($band)->title();

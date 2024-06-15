@@ -12,10 +12,11 @@ use Illuminate\Support\Str;
 
 class SpotifyService implements StreamingService
 {
-    public function __construct(
-        private Collection $currentArtists
-    )
+    private Collection $currentArtists;
+
+    public function __construct()
     {
+        $this->currentArtists = collect();
     }
 
     public function createPlaylist(int $year): Playlist
@@ -39,7 +40,7 @@ class SpotifyService implements StreamingService
             $this->setCurrentArtists($playlist);
         }
 
-        if ($this->currentArtists->doesntContain($band)) {
+        if ($this->currentArtists->doesntContain(str($band)->title())) {
             $album = $this->getMostRecentOrPopularAlbum($band);
 
             Http::spotify($this->getToken())->post('/playlists/'.$playlist->service_id.'/tracks', [
@@ -50,14 +51,7 @@ class SpotifyService implements StreamingService
 
     private function getMostRecentOrPopularAlbum(string $band): array
     {
-        $response = Http::spotify($this->getToken())
-            ->get('/search', [
-                'q' => 'artist:"'.$band.'"',
-                'type' => 'album'
-            ])
-            ->throw();
-
-        $albums = collect($response['albums']['items'])->sortByDesc('release_date');
+        $albums = $this->getAlbumsByArtist($band);
 
         $fullLengths = $albums->filter(fn(array $album) => $album['album_type'] === 'album');
         $epsAndSingles = $albums->filter(fn(array $album) => $album['album_type'] === 'single');
@@ -75,10 +69,6 @@ class SpotifyService implements StreamingService
             }
         }
 
-        if ($albums->count() === 0) {
-            throw new AlbumsNotFoundException('No albums found for '.$band);
-        }
-
         $album = $albums->first();
 
         // If the album is older than 3 years, get the most popular album instead
@@ -87,6 +77,36 @@ class SpotifyService implements StreamingService
         }
 
         return $album;
+    }
+
+    private function getAlbumsByArtist(string $band, int $offset = 0): Collection
+    {
+        $response = Http::spotify($this->getToken())
+            ->get('/search', [
+                'q' => 'artist:"'.$band.'"',
+                'type' => 'album',
+                'offset' => $offset,
+                'limit' => 50,
+            ])
+            ->throw();
+
+        $albums = collect($response['albums']['items'])
+            ->filterByArtist($band)
+            ->reject(fn (array $album) => str($album['name'])->contains(['live', 'Live', 'LIVE']))
+            ->sortByDesc('release_date');
+
+        if ($albums->isEmpty()) {
+            $offset += 50;
+            if ($response['albums']['total'] > $offset) {
+                $albums = $this->getAlbumsByArtist($band, $offset);
+            }
+        }
+
+        if ($albums->isEmpty()) {
+            throw new AlbumsNotFoundException('No albums found for '.$band);
+        }
+
+        return $albums;
     }
 
     private function getAlbumTracks(string $albumId): Collection
@@ -124,11 +144,22 @@ class SpotifyService implements StreamingService
         return $response['access_token'];
     }
 
-    private function setCurrentArtists(Playlist $playlist): void
+    private function setCurrentArtists(Playlist $playlist, int $offset = 0)
     {
-        $this->currentArtists = collect(Http::spotify($this->getToken())
+        $response = Http::spotify($this->getToken())
             ->get('/playlists/'.$playlist->service_id.'/tracks', [
-                'fields' => 'items(track(artists(name)))',
-            ])->throw()->json())->pluck('*.track.artists.*.name')->flatten()->unique();
+                'fields' => 'items(track(artists(name))),total',
+                'limit' => 50,
+                'offset' => $offset,
+            ])->throw();
+        $response->collect('items')->pluck('track.artists.0.name')->flatten()->unique()->each(function (string $artist) {
+            $this->currentArtists->push(str($artist)->title());
+        });
+        $this->currentArtists = $this->currentArtists->unique()->values();
+
+        $offset = $offset + 50;
+        if ($response['total'] > $offset) {
+            $this->setCurrentArtists($playlist, $offset);
+        }
     }
 }

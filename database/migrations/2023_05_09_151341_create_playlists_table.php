@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('service_id');
             $table->unsignedInteger('year');
+            $table->json('bands')->nullable();
             $table->timestamps();
         });
     }

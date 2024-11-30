@@ -18,7 +18,8 @@ class PlaylistFactory extends Factory
     {
         return [
             'service_id' => fake()->unique()->regexify('[a-z0-9]{22}'),
-            'year' => fake()->year(),
+            'year' => now()->year + 2,
+            'bands' => collect([fake()->firstName, fake()->firstName, fake()->firstName])->toJson(),
         ];
     }
 }

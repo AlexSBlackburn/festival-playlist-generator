@@ -32,7 +32,7 @@ class UpdatePlaylist extends Command
         try {
             $playlist = Playlist::where('year', $this->argument('year'))->first();
 
-            if (!$playlist) {
+            if (! $playlist) {
                 $this->info('No playlist found for the year '.$this->argument('year').'. Creating new playlist...');
                 $this->newLine();
 
@@ -42,7 +42,7 @@ class UpdatePlaylist extends Command
                 $this->newLine();
             }
 
-            $this->info('Playlist ID: ' . $playlist->service_id);
+            $this->info('Playlist ID: '.$playlist->service_id);
             $this->newLine();
             $this->info('Adding bands to playlist...');
             $this->newLine();
@@ -57,7 +57,7 @@ class UpdatePlaylist extends Command
                 }
             });
             $this->newLine();
-            
+
             if ($failedBands->isNotEmpty()) {
                 $this->newLine();
                 $failedBands->each(function (string $band): void {

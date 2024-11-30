@@ -12,13 +12,6 @@ use Illuminate\Support\Str;
 
 class SpotifyService implements StreamingService
 {
-    private Collection $currentArtists;
-
-    public function __construct()
-    {
-        $this->currentArtists = collect();
-    }
-
     public function createPlaylist(int $year): Playlist
     {
         $spotifyPlaylist = Http::spotify()
@@ -36,11 +29,10 @@ class SpotifyService implements StreamingService
 
     public function updatePlaylist(Playlist $playlist, string $band): void
     {
-        if ($this->currentArtists->isEmpty()) {
-            $this->setCurrentArtists($playlist);
-        }
+        if ($playlist->bands->doesntContain($band)) {
+            $playlist->bands = $playlist->bands->push($band);
+            $playlist->save();
 
-        if ($this->currentArtists->doesntContain(str($band)->title())) {
             $album = $this->getMostRecentOrPopularAlbum($band);
 
             Http::spotify()->post('/playlists/'.$playlist->service_id.'/tracks', [
@@ -53,14 +45,14 @@ class SpotifyService implements StreamingService
     {
         $albums = $this->getAlbumsByArtist($band);
 
-        $fullLengths = $albums->filter(fn(array $album) => $album['album_type'] === 'album');
-        $epsAndSingles = $albums->filter(fn(array $album) => $album['album_type'] === 'single');
+        $fullLengths = $albums->filter(fn (array $album) => $album['album_type'] === 'album');
+        $epsAndSingles = $albums->filter(fn (array $album) => $album['album_type'] === 'single');
 
         // Get albums, then EPs, then singles
         if ($fullLengths->isNotEmpty()) {
             $albums = $fullLengths;
         } else {
-            $eps = $epsAndSingles->filter(fn(array $item) => $item['total_tracks'] > 1);
+            $eps = $epsAndSingles->filter(fn (array $item) => $item['total_tracks'] > 1);
 
             if ($eps->isNotEmpty()) {
                 $albums = $eps;
@@ -115,25 +107,6 @@ class SpotifyService implements StreamingService
             ->get('/albums/'.$albumId.'/tracks')
             ->throw()
             ->collect(['items']);
-    }
-
-    private function setCurrentArtists(Playlist $playlist, int $offset = 0)
-    {
-        $response = Http::spotify()
-            ->get('/playlists/'.$playlist->service_id.'/tracks', [
-                'fields' => 'items(track(artists(name))),total',
-                'limit' => 50,
-                'offset' => $offset,
-            ])->throw();
-        $response->collect('items')->pluck('track.artists.0.name')->flatten()->unique()->each(function (string $artist) {
-            $this->currentArtists->push(str($artist)->title());
-        });
-        $this->currentArtists = $this->currentArtists->unique()->values();
-
-        $offset = $offset + 50;
-        if ($response['total'] > $offset) {
-            $this->setCurrentArtists($playlist, $offset);
-        }
     }
 
     /**

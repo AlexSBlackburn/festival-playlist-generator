@@ -32,14 +32,17 @@ class AppServiceProvider extends ServiceProvider
             'Authorization' => 'Bearer '.SpotifyService::getToken(),
         ])->baseUrl(Config::get('services.spotify.api_url')));
 
+        /*
+         * Filter albums by artist name, including common variations
+         */
         Collection::macro('filterByArtist', function (string $band): Collection {
-            $band = str($band)->title();
+            $band = str($band)->lower();
             $bandNames = collect([$band]);
-            $bandNames->add($band->replace('&', 'And'));
-            $bandNames->add($band->replace('And', '&'));
+            $bandNames->add($band->replace('&', 'and'));
+            $bandNames->add($band->replace('and', '&'));
 
             /** @var Collection $this */
-            return $this->filter(fn (array $album) => $bandNames->contains(str($album['artists'][0]['name'])->title()));
+            return $this->filter(fn (array $album) => $bandNames->contains(str($album['artists'][0]['name'])->lower()));
         });
     }
 }

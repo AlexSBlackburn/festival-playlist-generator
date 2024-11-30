@@ -26,8 +26,8 @@ Route::get('/{streamingService}/authorize', function (string $streamingService) 
 Route::get('/{streamingService}/callback', function (string $streamingService) {
     $user = Socialite::driver($streamingService)->user();
 
-    Cache::put($streamingService. '_refresh_token', $user->refreshToken);
-    Cache::put($streamingService. '_access_token', $user->token, $user->expiresIn);
+    Cache::put($streamingService.'_refresh_token', $user->refreshToken);
+    Cache::put($streamingService.'_access_token', $user->token, $user->expiresIn);
 
     echo 'Authorized user: '.$user->getName().'. Please re-run app:update-playlist command.';
 });

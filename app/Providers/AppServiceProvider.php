@@ -34,6 +34,10 @@ class AppServiceProvider extends ServiceProvider
 
         /*
          * Filter albums by artist name, including common variations
+         *
+         * This is necessary because the Spotify API doesn't strictly match the artist name
+         * when querying for albums. For example, "Sleep" might return albums by "Sleep" but
+         * also "Sleep Token" or "Sleeping With Sirens".
          */
         Collection::macro('filterByArtist', function (string $band): Collection {
             $band = str($band)->lower();

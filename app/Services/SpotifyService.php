@@ -83,8 +83,10 @@ class SpotifyService implements StreamingService
             ->throw();
 
         $albums = collect($response['albums']['items'])
-            ->filterByArtist($band)
+            ->reject(fn (array $album) => $album['album_type'] === 'compilation')
             ->reject(fn (array $album) => str($album['name'])->lower()->contains(['live', 'soundtrack']))
+            ->reject(fn (array $album) => count($album['artists']) > 1) // Reject split EPs
+            ->filterByArtist($band) // Artist query is not an exact match, so filter albums by other artists
             ->sortByDesc('release_date');
 
         if ($albums->isEmpty()) {

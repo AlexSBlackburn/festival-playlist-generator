@@ -84,7 +84,7 @@ class SpotifyService implements StreamingService
 
         $albums = collect($response['albums']['items'])
             ->filterByArtist($band)
-            ->reject(fn (array $album) => str($album['name'])->contains(['live', 'Live', 'LIVE']))
+            ->reject(fn (array $album) => str($album['name'])->lower()->contains(['live', 'soundtrack']))
             ->sortByDesc('release_date');
 
         if ($albums->isEmpty()) {

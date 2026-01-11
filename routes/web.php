@@ -1,6 +1,6 @@
 <?php
 
-use Illuminate\Support\Facades\Cache;
+use App\Http\Controllers\BandsExportController;use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Route;
 use Laravel\Socialite\Facades\Socialite;
 
@@ -31,3 +31,5 @@ Route::get('/{streamingService}/callback', function (string $streamingService) {
 
     echo 'Authorized user: '.$user->getName().'. Please re-run app:update-playlist command.';
 });
+
+Route::get('/bands-export/{filename}', [BandsExportController::class, 'index'])->name('export.bands.index');

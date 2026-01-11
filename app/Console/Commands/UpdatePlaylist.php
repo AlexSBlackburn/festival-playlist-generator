@@ -3,10 +3,12 @@
 namespace App\Console\Commands;
 
 use App\Exceptions\AlbumsNotFoundException;
+use App\Exports\BandsExport;
 use App\Interfaces\FestivalService;
 use App\Interfaces\StreamingService;
 use App\Models\Playlist;
 use Illuminate\Console\Command;
+use Maatwebsite\Excel\Facades\Excel;
 
 class UpdatePlaylist extends Command
 {
@@ -15,7 +17,7 @@ class UpdatePlaylist extends Command
      *
      * @var string
      */
-    protected $signature = 'app:update-playlist {year}';
+    protected $signature = 'app:update-playlist {year} {--csv}';
 
     /**
      * The console command description.
@@ -63,6 +65,12 @@ class UpdatePlaylist extends Command
                 $failedBands->each(function (string $band): void {
                     $this->line('No albums found for '.$band);
                 });
+            }
+
+            if ($this->option('csv')) {
+                $this->newLine();
+                $filename = 'desertfest-'.$this->argument('year').'.csv';
+                $this->info('Visit '.route('export.bands.index', $filename).' to download the CSV.');
             }
         } catch (\Exception $e) {
             $this->error($e->getMessage());

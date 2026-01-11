@@ -2,6 +2,4 @@
 
 namespace App\Exceptions;
 
-class AlbumsNotFoundException extends \Exception
-{
-}
+class AlbumsNotFoundException extends \Exception {}

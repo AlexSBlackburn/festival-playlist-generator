@@ -19,7 +19,7 @@ class SpotifyService implements StreamingService
                 'name' => 'Desertfest '.$year,
             ])->throw()->json();
 
-        $playlist = new Playlist();
+        $playlist = new Playlist;
         $playlist->year = $year;
         $playlist->service_id = $spotifyPlaylist['id'];
         $playlist->save();
@@ -121,7 +121,7 @@ class SpotifyService implements StreamingService
         }
 
         if (! Cache::has('spotify_refresh_token')) {
-            throw new \Exception('No refresh token found. Please visit http://localhost/spotify/authorize to request one.', 401);
+            throw new \Exception(sprintf('No refresh token found. Please visit %s to request one.', config('app.url').'/spotify/authorize'), 401);
         }
 
         $response = Http::asForm()

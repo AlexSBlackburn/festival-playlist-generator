@@ -1,5 +1,9 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Exceptions;
 
-class AlbumsNotFoundException extends \Exception {}
+use Exception;
+
+final class AlbumsNotFoundException extends Exception {}

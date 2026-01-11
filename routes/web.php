@@ -1,6 +1,9 @@
 <?php
 
-use App\Http\Controllers\BandsExportController;use Illuminate\Support\Facades\Cache;
+declare(strict_types=1);
+
+use App\Http\Controllers\BandsExportController;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Route;
 use Laravel\Socialite\Facades\Socialite;
 

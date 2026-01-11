@@ -1,23 +1,24 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Console\Commands;
 
 use App\Exceptions\AlbumsNotFoundException;
-use App\Exports\BandsExport;
 use App\Interfaces\FestivalService;
 use App\Interfaces\StreamingService;
 use App\Models\Playlist;
+use Exception;
 use Illuminate\Console\Command;
-use Maatwebsite\Excel\Facades\Excel;
 
-class UpdatePlaylist extends Command
+final class UpdatePlaylist extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'app:update-playlist {year} {--csv}';
+    protected $signature = 'app:update-playlist {year}';
 
     /**
      * The console command description.
@@ -67,12 +68,10 @@ class UpdatePlaylist extends Command
                 });
             }
 
-            if ($this->option('csv')) {
-                $this->newLine();
-                $filename = 'desertfest-'.$this->argument('year').'.csv';
-                $this->info('Visit '.route('export.bands.index', $filename).' to download the CSV.');
-            }
-        } catch (\Exception $e) {
+            $this->newLine();
+            $filename = 'desertfest-'.$this->argument('year').'.csv';
+            $this->info('Visit '.route('export.bands.index', $filename).' to download the CSV.');
+        } catch (Exception $e) {
             $this->error($e->getMessage());
         }
     }

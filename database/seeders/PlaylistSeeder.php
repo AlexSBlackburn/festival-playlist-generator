@@ -1,11 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Database\Seeders;
 
 use App\Models\Playlist;
 use Illuminate\Database\Seeder;
 
-class PlaylistSeeder extends Seeder
+final class PlaylistSeeder extends Seeder
 {
     public function run(): void
     {

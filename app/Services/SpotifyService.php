@@ -1,17 +1,47 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services;
 
 use App\Exceptions\AlbumsNotFoundException;
 use App\Interfaces\StreamingService;
 use App\Models\Playlist;
+use Exception;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 
-class SpotifyService implements StreamingService
+final class SpotifyService implements StreamingService
 {
+    /**
+     * Get the cached Spotify access token or refresh it
+     */
+    public static function getToken(): string
+    {
+        if (Cache::has('spotify_access_token')) {
+            return Cache::get('spotify_access_token');
+        }
+
+        if (! Cache::has('spotify_refresh_token')) {
+            throw new Exception(sprintf('No refresh token found. Please visit %s to request one.', config('app.url').'/spotify/authorize'), 401);
+        }
+
+        $response = Http::asForm()
+            ->withHeaders([
+                'Authorization' => 'Basic '.base64_encode(config('services.spotify.client_id').':'.config('services.spotify.client_secret')),
+            ])
+            ->post(config('services.spotify.token_url'), [
+                'grant_type' => 'refresh_token',
+                'refresh_token' => Cache::get('spotify_refresh_token'),
+            ])->throw()->json();
+
+        Cache::put('spotify_access_token', $response['access_token'], $response['expires_in']);
+
+        return $response['access_token'];
+    }
+
     public function createPlaylist(int $year): Playlist
     {
         $spotifyPlaylist = Http::spotify()
@@ -109,32 +139,5 @@ class SpotifyService implements StreamingService
             ->get('/albums/'.$albumId.'/tracks')
             ->throw()
             ->collect(['items']);
-    }
-
-    /**
-     * Get the cached Spotify access token or refresh it
-     */
-    public static function getToken(): string
-    {
-        if (Cache::has('spotify_access_token')) {
-            return Cache::get('spotify_access_token');
-        }
-
-        if (! Cache::has('spotify_refresh_token')) {
-            throw new \Exception(sprintf('No refresh token found. Please visit %s to request one.', config('app.url').'/spotify/authorize'), 401);
-        }
-
-        $response = Http::asForm()
-            ->withHeaders([
-                'Authorization' => 'Basic '.base64_encode(config('services.spotify.client_id').':'.config('services.spotify.client_secret')),
-            ])
-            ->post(config('services.spotify.token_url'), [
-                'grant_type' => 'refresh_token',
-                'refresh_token' => Cache::get('spotify_refresh_token'),
-            ])->throw()->json();
-
-        Cache::put('spotify_access_token', $response['access_token'], $response['expires_in']);
-
-        return $response['access_token'];
     }
 }

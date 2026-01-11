@@ -1,12 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Exports;
 
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 
-readonly class BandsExport implements FromCollection, WithHeadings
+final readonly class BandsExport implements FromCollection, WithHeadings
 {
     public function __construct(
         private Collection $bands
@@ -15,7 +17,7 @@ readonly class BandsExport implements FromCollection, WithHeadings
     public function collection(): Collection
     {
         return collect([
-            $this->bands->sort()->map(fn (string $band) => [$band])
+            $this->bands->sort()->map(fn (string $band) => [$band]),
         ]);
     }
 

@@ -17,7 +17,7 @@ final readonly class BandsExport implements FromCollection, WithHeadings
     public function collection(): Collection
     {
         return collect([
-            $this->bands->sort()->map(fn (string $band) => [$band]),
+            $this->bands->sort()->map(fn (string $band): array => [$band]),
         ]);
     }
 

@@ -11,6 +11,7 @@ return RectorConfig::configure()
         __DIR__.'/bootstrap/app.php',
         __DIR__.'/database',
         __DIR__.'/public',
+        __DIR__.'/tests',
     ])
     ->withSkip([
         AddOverrideAttributeToOverriddenMethodsRector::class,
@@ -18,9 +19,9 @@ return RectorConfig::configure()
     ->withPreparedSets(
         deadCode: true,
         codeQuality: true,
+        codingStyle: true,
         typeDeclarations: true,
         privatization: true,
         earlyReturn: true,
-        strictBooleans: true,
     )
     ->withPhpSets();

@@ -15,7 +15,7 @@ final class Playlist extends Model
     protected function bands(): Attribute
     {
         return Attribute::make(
-            get: fn ($value) => collect(json_decode($value, true)),
+            get: fn ($value): \Illuminate\Support\Collection => collect(json_decode((string) $value, true)),
             set: fn ($value) => $value->toJson(),
         );
     }

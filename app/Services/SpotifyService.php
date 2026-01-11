@@ -75,27 +75,23 @@ final class SpotifyService implements StreamingService
     {
         $albums = $this->getAlbumsByArtist($band);
 
-        $fullLengths = $albums->filter(fn (array $album) => $album['album_type'] === 'album');
-        $epsAndSingles = $albums->filter(fn (array $album) => $album['album_type'] === 'single');
+        $fullLengths = $albums->filter(fn (array $album): bool => $album['album_type'] === 'album');
+        $epsAndSingles = $albums->filter(fn (array $album): bool => $album['album_type'] === 'single');
 
         // Get albums, then EPs, then singles
         if ($fullLengths->isNotEmpty()) {
             $albums = $fullLengths;
         } else {
-            $eps = $epsAndSingles->filter(fn (array $item) => $item['total_tracks'] > 1);
+            $eps = $epsAndSingles->filter(fn (array $item): bool => $item['total_tracks'] > 1);
 
-            if ($eps->isNotEmpty()) {
-                $albums = $eps;
-            } else {
-                $albums = $epsAndSingles;
-            }
+            $albums = $eps->isNotEmpty() ? $eps : $epsAndSingles;
         }
 
         $album = $albums->first();
 
         // If the album is older than 3 years, get the most popular album instead
         if (Str::substr($album['release_date'], 0, 4) < now()->subYears(3)->format('Y')) {
-            $album = $albums->sortByDesc('popularity')->first();
+            return $albums->sortByDesc('popularity')->first();
         }
 
         return $album;
@@ -113,9 +109,9 @@ final class SpotifyService implements StreamingService
             ->throw();
 
         $albums = collect($response['albums']['items'])
-            ->reject(fn (array $album) => $album['album_type'] === 'compilation')
+            ->reject(fn (array $album): bool => $album['album_type'] === 'compilation')
             ->reject(fn (array $album) => str($album['name'])->lower()->contains(['live', 'soundtrack']))
-            ->reject(fn (array $album) => count($album['artists']) > 1) // Reject split EPs
+            ->reject(fn (array $album): bool => count($album['artists']) > 1) // Reject split EPs
             ->filterByArtist($band) // Artist query is not an exact match, so filter albums by other artists
             ->sortByDesc('release_date');
 

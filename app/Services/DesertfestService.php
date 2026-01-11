@@ -13,11 +13,7 @@ final class DesertfestService implements FestivalService
 {
     public function getBands(): Collection
     {
-        return Cache::remember(__METHOD__, now()->addDay(), function () {
-            return collect(Http::get(config('services.desertfest.url'))->json())
-                ->map(function (array $band) {
-                    return html_entity_decode($band['title']['rendered']);
-                });
-        });
+        return Cache::remember(__METHOD__, now()->addDay(), fn() => collect(Http::get(config('services.desertfest.url'))->json())
+            ->map(fn(array $band): string => html_entity_decode((string) $band['title']['rendered'])));
     }
 }

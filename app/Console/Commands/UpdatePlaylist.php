@@ -25,7 +25,7 @@ final class UpdatePlaylist extends Command
      *
      * @var string
      */
-    protected $description = 'Update a festival playlist, optionally create a playlist if it doesn\'t exist';
+    protected $description = "Update a festival playlist, optionally create a playlist if it doesn't exist";
 
     /**
      * Execute the console command.
@@ -71,8 +71,8 @@ final class UpdatePlaylist extends Command
             $this->newLine();
             $filename = 'desertfest-'.$this->argument('year').'.csv';
             $this->info('Visit '.route('export.bands.index', $filename).' to download the CSV.');
-        } catch (Exception $e) {
-            $this->error($e->getMessage());
+        } catch (Exception $exception) {
+            $this->error($exception->getMessage());
         }
     }
 }

@@ -39,7 +39,10 @@ final class UpdatePlaylist extends Command
                 $this->line('No playlist found for the year '.$this->argument('year').'. Creating new playlist...');
                 $this->newLine();
 
-                $playlist = $streamingService->createPlaylist($this->argument('year'));
+                $playlist = $streamingService->createPlaylist(
+                    festivalName: $festivalService->getFestivalName(),
+                    year: (int) $this->argument('year')
+                );
 
                 $this->info('Playlist created for the year '.$playlist->year);
                 $this->newLine();

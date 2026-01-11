@@ -42,11 +42,11 @@ final class SpotifyService implements StreamingService
         return $response['access_token'];
     }
 
-    public function createPlaylist(int $year): Playlist
+    public function createPlaylist(string $festivalName, int $year): Playlist
     {
         $spotifyPlaylist = Http::spotify()
             ->post('/users/'.config('services.spotify.user_id').'/playlists', [
-                'name' => 'Desertfest '.$year,
+                'name' => $festivalName.' '.$year,
             ])->throw()->json();
 
         $playlist = new Playlist;

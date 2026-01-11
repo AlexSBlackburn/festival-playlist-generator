@@ -8,5 +8,7 @@ use Illuminate\Support\Collection;
 
 interface FestivalService
 {
+    public function getFestivalName(): string;
+
     public function getBands(): Collection;
 }

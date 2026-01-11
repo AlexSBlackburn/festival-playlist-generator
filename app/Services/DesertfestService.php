@@ -11,6 +11,11 @@ use Illuminate\Support\Facades\Http;
 
 final class DesertfestService implements FestivalService
 {
+    public function getFestivalName(): string
+    {
+        return 'Desertfest';
+    }
+
     public function getBands(): Collection
     {
         return Cache::remember(__METHOD__, now()->addDay(), fn() => collect(Http::get(config('services.desertfest.url'))->json())
